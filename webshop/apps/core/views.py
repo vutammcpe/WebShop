@@ -1,13 +1,15 @@
 from django.http import request
-from django.shortcuts import render,  HttpResponse, redirect
-from django.views.generic import CreateView
-from .forms import RegistrationForm, RegistrationFormCustomer, ProductForm
-from .models import Customer, CustomUser
+from django.shortcuts import render,  HttpResponse, redirect,get_object_or_404
+from django.views.generic import CreateView,DetailView, ListView
+from .forms import RegistrationForm, RegistrationFormCustomer, ProductForm,AddToCartForm
+from .models import Customer, CustomUser,Cart,ProductInCart
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.views import LoginView, LogoutView
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 
+import random
 from webshop import settings
 from django.core.mail import send_mail
 from .tokens import account_activation_token
@@ -128,3 +130,51 @@ def add_product(request):
         form = ProductForm()
     
     return render(request, 'core/parts/add_product.html', {'form': form})
+
+
+class ProductDetail(DetailView):
+    model = Product
+    template_name = "core/parts/product_details.html"
+    context_object_name = "product"
+
+
+
+@login_required
+def addToCart(request, id):
+    try:
+        cart = Cart.objects.get(user = request.user)
+        try:
+            product = Product.objects.get(product_id = id)
+            try:
+                productincart = ProductInCart.objects.get(cart = cart, product = product)
+                productincart.quantity = productincart.quantity + 1
+                productincart.save()
+                messages.success(request, "Successfully added to cart")
+                return redirect(reverse_lazy("displaycart"))
+            except:
+                productincart = ProductInCart.objects.create(cart = cart, product = product, quantity=1)
+                messages.success(request, "Successfully added to cart")
+                return redirect(reverse_lazy("displaycart"))
+        except:
+            messages.error(request, "Product can not be found")
+            return redirect(reverse_lazy('listproducts'))
+    except:
+        cart = Cart.objects.create(user = request.user)
+        try:
+            product = Product.objects.get(product_id = id)
+            productincart = ProductInCart.objects.create(cart = cart, product = product, quantity = 1)
+            messages.success(request, "Successfully added to cart")
+            return redirect(reverse_lazy("displaycart"))
+        except:
+            messages.error(request, "Error in adding to cart. Please try again")
+            return redirect(reverse_lazy('listproducts'))
+
+
+class DisplayCart(LoginRequiredMixin, ListView):
+    model = ProductInCart
+    template_name = "firstapp/displaycart.html"
+    context_object_name = "cart"
+
+    def get_queryset(self):
+        queryset = ProductInCart.objects.filter(cart = self.request.user.cart)
+        return queryset

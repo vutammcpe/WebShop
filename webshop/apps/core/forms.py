@@ -91,3 +91,7 @@ class ProductForm(ModelForm):
     class Meta:
         model = Product
         fields = ['category', 'image', 'product_name', 'price']
+
+
+class AddToCartForm(forms.Form):
+    quantity = forms.IntegerField()

@@ -20,4 +20,6 @@ urlpatterns = [
     path('activate/<uidb64>/<token>', views.activate, name='activate'),
     path('admin_custom/',views.admin_custom,name='admin_custom'),
     path('add_product/',views.add_product,name='add_product'),
+    path('productdetail/<int:pk>/', views.ProductDetail.as_view(), name="productdetail"),
+    path('addtocart/<int:id>/', views.addToCart, name="addtocart"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
