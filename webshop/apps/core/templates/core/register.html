@@ -1,0 +1,38 @@
+{% extends 'core/base.html' %}
+
+{% block title %}Welcome | {% endblock %}
+
+{% block content %}
+
+
+<form method="POST">{% csrf_token %}
+<div class="main-area">
+<div class="register-form">
+{{ form.non_field_errors }}
+      <h2 class="mainheading">Wonder Shop</h2>
+      <h4 class="mainheading">Sign Up For Seller</h4>
+      <label for="id_email" class="login-labels">Email Address*</label> 
+      {{ form.email.errors }}
+      {{ form.email|addclass:'form-control'|addplaceholder:'Email Address'}}
+      
+      <label for="id_name" class="login-labels">Name*</label> 
+      {{ form.name.errors }}
+      {{ form.name|addclass:'form-control'|addplaceholder:'Your Name' }}
+      <label for="id_password1" class="login-labels">Password*</label> 
+      {{ form.password1.errors }}
+      {{ form.password1|addclass:'form-control'|addplaceholder:'Your Password' }}
+      <label for="id_password2" class="login-labels">Password Confirmation*</label> 
+      {{ form.password2.errors }}
+      {{ form.password2|addclass:'form-control'|addplaceholder:'Your Password' }}
+      <label for="id_gst" class="login-labels">GST*</label> 
+      {{ form.gst.errors }}
+      {{ form.gst|addclass:'form-control'|addplaceholder:'GST' }}
+      <label for="id_warehouse_location" class="login-labels">Warehouse Location*</label> 
+      {{ form.warehouse_location.errors }}
+      {{ form.warehouse_location|addclass:'form-control'|addplaceholder:'Warehouse Location' }}
+      <br>
+<button type="submit" class="btn btn-primary btn-lg signup-button">Signup</button>
+</form>
+</div>
+</div>
+{% endblock %}

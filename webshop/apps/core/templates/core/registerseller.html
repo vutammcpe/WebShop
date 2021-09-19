@@ -1,0 +1,24 @@
+{% extends 'core/base.html' %}
+{% load myfilters %}
+
+{% block title %}Đăng ký Seller | {% endblock %}
+
+{% block content %}
+<form method="POST">{% csrf_token %}
+<div class="main-area">
+<div class="register-form">
+{{ form.non_field_errors }}
+      <h2 class="mainheading">FAISNE Shop</h2>
+      <h4 class="mainheading">Sign Up For Seller</h4>
+      <label for="id_gst" class="login-labels">GST*</label> 
+      {{ form.gst.errors }}
+      {{ form.gst|addclass:'form-control'|addplaceholder:'GST' }}
+      <label for="id_warehouse_location" class="login-labels">Warehouse Location*</label> 
+      {{ form.warehouse_location.errors }}
+      {{ form.warehouse_location|addclass:'form-control'|addplaceholder:'Warehouse Location' }}
+      <br>
+<button type="submit" class="btn btn-primary btn-lg signup-button">Signup</button>
+</form>
+</div>
+</div>
+{% endblock %}
