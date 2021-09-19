@@ -1,5 +1,5 @@
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
-from .models import CustomUser,Seller, SellerAdditional,Customer,Product
+from .models import CustomUser,Seller, SellerAdditional,Customer,Product,ProductInCart
 from django.forms import ModelForm
 from django.core.validators import RegexValidator
 from django import forms
@@ -93,5 +93,9 @@ class ProductForm(ModelForm):
         fields = ['category', 'image', 'product_name', 'price']
 
 
-class AddToCartForm(forms.Form):
-    quantity = forms.IntegerField()
+class CartForm(forms.ModelForm):
+    class Meta:
+        model = ProductInCart
+        fields = [
+            'quantity'
+        ]

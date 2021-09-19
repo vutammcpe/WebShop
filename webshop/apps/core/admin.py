@@ -47,6 +47,35 @@ class CartInline(admin.TabularInline):
 
 
 
+
+@admin.register(Cart) # through register decorator
+class CartAdmin(admin.ModelAdmin):
+    model = Cart
+    list_display = ('user','staff', 'created_on',)    # here user__is_staff will not work   
+    list_filter = ('user', 'created_on',)
+    #fields = ('staff',)           # either fields or fieldset
+    fieldsets = (
+        (None, {'fields': ('user', 'created_on',)}),   # only direct relationship no nested relationship('__') ex. user__is_staff
+        #('User', {'fields': ('staff',)}),
+    )
+    inlines = (
+        ProductInCartInline,
+    )
+    # To display only in list_display
+    def staff(self,obj):
+        return obj.user.is_staff
+    # staff.empty_value_display = '???'
+    staff.admin_order_field  = 'user__is_staff'  #Allows column order sorting
+    staff.short_description = 'Staff User'  #Renames column head
+
+    #Filtering on side - for some reason, this works
+    list_filter = ['user__is_staff', 'created_on',]    # with direct foreign key(user) no error but not shown in filters, with function error
+    # ordering = ['user',]
+    search_fields = ['user__username']    
+
+
+
+
 admin.site.register(CustomUser, CustomUserAdmin)
 admin.site.register(Customer)
 admin.site.register(Seller, SellerAdmin)

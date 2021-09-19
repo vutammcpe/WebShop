@@ -1,7 +1,7 @@
 from django.http import request
 from django.shortcuts import render,  HttpResponse, redirect,get_object_or_404
-from django.views.generic import CreateView,DetailView, ListView
-from .forms import RegistrationForm, RegistrationFormCustomer, ProductForm,AddToCartForm
+from django.views.generic import CreateView,DetailView, ListView, UpdateView, DeleteView
+from .forms import RegistrationForm, RegistrationFormCustomer, ProductForm,CartForm
 from .models import Customer, CustomUser,Cart,ProductInCart
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.views import LoginView, LogoutView
@@ -20,7 +20,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from .models import Product
-from django.utils.text import slugify
+
 
 #from apps.product.models import Product
 
@@ -157,7 +157,7 @@ def addToCart(request, id):
                 return redirect(reverse_lazy("displaycart"))
         except:
             messages.error(request, "Product can not be found")
-            return redirect(reverse_lazy('listproducts'))
+            return redirect(reverse_lazy('frontpage'))
     except:
         cart = Cart.objects.create(user = request.user)
         try:
@@ -167,14 +167,37 @@ def addToCart(request, id):
             return redirect(reverse_lazy("displaycart"))
         except:
             messages.error(request, "Error in adding to cart. Please try again")
-            return redirect(reverse_lazy('listproducts'))
+            return redirect(reverse_lazy('frontpage'))
 
 
 class DisplayCart(LoginRequiredMixin, ListView):
     model = ProductInCart
-    template_name = "firstapp/displaycart.html"
+    template_name = "core/parts/display_cart.html"
     context_object_name = "cart"
 
     def get_queryset(self):
         queryset = ProductInCart.objects.filter(cart = self.request.user.cart)
         return queryset
+        
+
+
+
+class UpdateCart(LoginRequiredMixin, UpdateView):
+    model = ProductInCart
+    form_class = CartForm
+    success_url = reverse_lazy("displaycart")
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 302:
+            if int(request.POST.get("quantity")) == 0:
+                productincart = self.get_object()
+                productincart.delete()
+            return response
+        else:
+            messages.error(request, "error in quantity")
+            return redirect(reverse_lazy("displaycart"))
+
+class DeleteFromCart(LoginRequiredMixin, DeleteView):
+    model = ProductInCart
+    success_url = reverse_lazy("displaycart")  
