@@ -1,0 +1,69 @@
+{% extends 'core/base.html' %}
+
+{% block title %} Product Details | {% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <p>
+        <a href="{% url 'products' %}"><i class="fa fa-arrow-left"></i> Return to products</a>
+    </p>
+</div>
+
+<div class="container" id="product-section">
+    <div class="row">
+        <div class="col-md-6">
+            <img src="/media/{{ product.image }}" alt="{{ product.title }}" class="image-responsive">
+        </div>
+        <div class="col-md-6">
+            <div class="row">
+                <div class="col-md-12">
+                    <span class="showcase-title">{{ product.title }}&nbsp;&nbsp;</span><span class="showcase-price"> {{ product.price }}VND</span>
+                </div>
+            </div>
+            
+        
+            <div class="row">
+                <div class="col-md-12">
+                    <div>Size: {{ product.get_size_display }}</div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <p>{{ product.description }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12 bottom-rule">
+                </div>
+            </div>
+            <hr>
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="notification is-success is-toast">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+
+
+
+
+            <form method="POST" action="{% url 'add_to_cart' product.id %}">
+                {% csrf_token %}
+
+                <div class="field has-addons">
+                    <div class="control">
+                        <input name="return_path" type="hidden" value="{{ request.path }}">
+                        <input name="quantity" type="number" min="1" max="999" value="1" class="form-control">
+                    </div>
+
+                    <div class="control">
+                        <button class="button is-dark is-uppercase">Add to cart</button>
+                    </div>
+                </div>
+            </form>
+        
+        </div>
+    </div>
+</div>
+
+{% endblock %}

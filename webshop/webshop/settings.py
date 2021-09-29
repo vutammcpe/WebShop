@@ -43,6 +43,10 @@ LOGIN_REDIRECT_URL = 'frontpage'
 LOGOUT_REDIRECT_URL = 'frontpage'
 
 
+SESSION_COOKIE_AGE = 86400
+CART_SESSION_ID = 'apps'
+
+
 # Application definition
 
 INSTALLED_APPS = [
@@ -52,6 +56,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_forms_bootstrap',
 
     'environ',
     'multiselectfield',
@@ -86,6 +91,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'apps.core.context_processors.cart_contents',
             ],
         },
     },

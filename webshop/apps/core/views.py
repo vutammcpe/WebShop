@@ -1,15 +1,15 @@
+
 from django.http import request
 from django.shortcuts import render,  HttpResponse, redirect,get_object_or_404
-from django.views.generic import CreateView,DetailView, ListView, UpdateView, DeleteView
-from .forms import RegistrationForm, RegistrationFormCustomer, ProductForm,CartForm
-from .models import Customer, CustomUser,Cart,ProductInCart
+from django.views.generic import CreateView
+from .forms import  RegistrationFormCustomer,BillingAddressForm,ContactUsForm
+from .models import  CustomUser,BillingAddress
 from django.urls import reverse_lazy, reverse
-from django.contrib.auth.views import LoginView, LogoutView
+from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-import random
+from django.db.models import Q
 from webshop import settings
 from django.core.mail import send_mail
 from .tokens import account_activation_token
@@ -19,8 +19,8 @@ from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from .models import Product
-
+from .models import Product,GenderFilter
+from django.http import HttpResponseRedirect
 
 #from apps.product.models import Product
 
@@ -30,8 +30,7 @@ def frontpage(request):
 
     return render(request, 'core/frontpage.html', {'newest_products': newest_products})
 
-def contact(request):
-    return render(request, 'core/contact.html')
+
 
 
 
@@ -54,7 +53,7 @@ class RegisterView(CreateView):
             user = CustomUser.objects.get(email = user_email)
             user.is_active = False
             user.save()
-            current_site = get_current_site(request)     #www.wondershop.in:8000  127.0.0.1:8000 
+            current_site = get_current_site(request)      #127.0.0.1:8000 
             mail_subject = 'Activate your account.'
             message = render_to_string('core/registration/acc_active_email.html', {
                 'user': user,
@@ -102,102 +101,131 @@ def activate(request, uidb64, token):
 
 class LoginViewUser(LoginView):
     template_name = "core/login.html"
-
     
-
 
 def logout_request(request):
 	logout(request)
 	messages.info(request, "You have successfully logged out.") 
 	return redirect('frontpage')
 
-@login_required
-def admin_custom(request):
-    view = Product.objects.all()
-    return render(request, 'core/admin_cus.html',{'view': view})
 
-@login_required
-def add_product(request):
+
+def contactus(request):
     if request.method == 'POST':
-        form = ProductForm(request.POST, request.FILES)
+        form = ContactUsForm(request.POST)
+        if form.is_valid():      #clean_data
+            if len(form.cleaned_data.get('query'))>10:
+                form.add_error('query', 'Query length is not right')
+                return render(request, 'core/contact.html', {'form':form})
+            form.save()
+            return HttpResponse("Thank YOu")
+        else:
+            if len(form.cleaned_data.get('query'))>10:
+                #form.add_error('query', 'Query length is not right')
+                form.errors['__all__'] = 'Query length is not right. It should be in 10 digits.'
+            return render(request, 'core/contact.html', {'form':form})
+    return render(request, 'core/contact.html', {'form':ContactUsForm})
 
-        if form.is_valid():
-            product = form.save(commit=False)
-            product.save()
 
-            return redirect('admin_custom')
-    else:
-        form = ProductForm()
-    
-    return render(request, 'core/parts/add_product.html', {'form': form})
-
-
-class ProductDetail(DetailView):
-    model = Product
-    template_name = "core/parts/product_details.html"
-    context_object_name = "product"
 
 
 
 @login_required
-def addToCart(request, id):
-    try:
-        cart = Cart.objects.get(user = request.user)
-        try:
-            product = Product.objects.get(product_id = id)
-            try:
-                productincart = ProductInCart.objects.get(cart = cart, product = product)
-                productincart.quantity = productincart.quantity + 1
-                productincart.save()
-                messages.success(request, "Successfully added to cart")
-                return redirect(reverse_lazy("displaycart"))
-            except:
-                productincart = ProductInCart.objects.create(cart = cart, product = product, quantity=1)
-                messages.success(request, "Successfully added to cart")
-                return redirect(reverse_lazy("displaycart"))
-        except:
-            messages.error(request, "Product can not be found")
-            return redirect(reverse_lazy('frontpage'))
-    except:
-        cart = Cart.objects.create(user = request.user)
-        try:
-            product = Product.objects.get(product_id = id)
-            productincart = ProductInCart.objects.create(cart = cart, product = product, quantity = 1)
-            messages.success(request, "Successfully added to cart")
-            return redirect(reverse_lazy("displaycart"))
-        except:
-            messages.error(request, "Error in adding to cart. Please try again")
-            return redirect(reverse_lazy('frontpage'))
+def profile(request):
+    """
+    Shows the customer their current billing address details.
+    Allows the customer to update their billing address details.
+    Creates a new billing address on completion.
+    """
+
+    billing_address = BillingAddress.objects.filter(user=request.user).first()
+    if request.method == "POST":
+        billing_form = BillingAddressForm(request.POST, instance=billing_address)
+        if billing_form.is_valid():
+            billing_address = billing_form.save(commit=False)
+            billing_address.user = request.user
+            billing_address.save()
+            messages.success(request,
+                             "Your billing address has been updated successfully")
+    else:
+        billing_form = BillingAddressForm(instance=billing_address)
+
+    return render(request, 'core/profile.html', {"billing_form": billing_form})
 
 
-class DisplayCart(LoginRequiredMixin, ListView):
-    model = ProductInCart
-    template_name = "core/parts/display_cart.html"
-    context_object_name = "cart"
-
-    def get_queryset(self):
-        queryset = ProductInCart.objects.filter(cart = self.request.user.cart)
-        return queryset
-        
+def all_products(request):
+    products = Product.objects.all()
+    return render(request, 'core/parts/products.html', {'products': products})
 
 
+def mens_products(request):
+    person_category = GenderFilter.objects.filter(category="M")
+    products = Product.objects.filter(person_category=person_category[0])
+    return render(request, 'core/parts/products.html', {'products': products})
 
-class UpdateCart(LoginRequiredMixin, UpdateView):
-    model = ProductInCart
-    form_class = CartForm
-    success_url = reverse_lazy("displaycart")
 
-    def post(self, request, *args, **kwargs):
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == 302:
-            if int(request.POST.get("quantity")) == 0:
-                productincart = self.get_object()
-                productincart.delete()
-            return response
-        else:
-            messages.error(request, "error in quantity")
-            return redirect(reverse_lazy("displaycart"))
+def womens_products(request):
+    person_category = GenderFilter.objects.filter(category="W")
+    products = Product.objects.filter(person_category=person_category[0])
+    return render(request, 'core/parts/products.html', {"products": products})
 
-class DeleteFromCart(LoginRequiredMixin, DeleteView):
-    model = ProductInCart
-    success_url = reverse_lazy("displaycart")  
+
+def product_showcase(request, id):
+    
+    product =Product.objects.get(id=id)
+   
+    
+    return render(request, 'core/parts/product_showcase.html', {"product": product})
+
+
+
+def view_cart(request):
+    """A View that renders the cart contents page"""
+    return render(request, "core/parts/cart.html")
+
+@login_required
+def add_to_cart(request, id):
+    """Add a quantity of the specified product to the cart"""
+
+    quantity = int(request.POST.get('quantity'))
+    cart = request.session.get('apps', {})
+    if id in cart:
+        cart[id] = int(cart[id]) + quantity
+    else:
+        cart[id] = cart.get(id, quantity)
+
+    request.session['apps'] = cart
+    return_path = request.POST.get('return_path','/')
+    return HttpResponseRedirect(return_path)
+
+@login_required
+def adjust_cart(request, id):
+    """
+    Adjust the quantity of the specified product to the specified
+    amount
+    """
+    print(request.POST)
+    
+    quantity = int(request.POST.get('quantity'))
+    cart = request.session.get('apps', {})
+
+    if quantity > 0:
+        cart[id] = quantity
+    else:
+        cart.pop(id)
+
+
+    request.session['apps'] = cart
+    return redirect(reverse('view_cart'))
+def remove_cart(request, id):
+    cart = request.session.get('apps', {})
+    if cart:
+        cart.pop(id)
+
+    request.session['apps'] = cart
+    return redirect(reverse('view_cart'))
+
+   
+
+
+

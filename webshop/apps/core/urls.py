@@ -8,9 +8,9 @@ from django.contrib.staticfiles.urls import static
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    #path('admin/', admin.site.urls),
     path('', views.frontpage , name='frontpage'),
-    path('contact/', views.contact , name='contact'),
+    path('contact/', views.contactus , name='contact'),
     path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('img/favicons/favicon-16x16.png'))),
 
 
@@ -18,11 +18,27 @@ urlpatterns = [
     path('login/', views.LoginViewUser.as_view(), name="login"),
     path('logout/', views.logout_request, name="logout"),
     path('activate/<uidb64>/<token>', views.activate, name='activate'),
-    path('admin_custom/',views.admin_custom,name='admin_custom'),
-    path('add_product/',views.add_product,name='add_product'),
-    path('productdetail/<int:pk>/', views.ProductDetail.as_view(), name="productdetail"),
-    path('addtocart/<int:id>/', views.addToCart, name="addtocart"),
-    path('displaycart/', views.DisplayCart.as_view(), name="displaycart"),
-    path('updatecart/<int:pk>/', views.UpdateCart.as_view(), name="updatecart"),
-    path('deletefromcart/<int:pk>/', views.DeleteFromCart.as_view(), name="deletefromcart"),
+
+   
+
+
+    path('profile/',views.BillingAddress,name='profile'),
+
+
+    
+  
+    path('products/', views.all_products, name='products'),
+    path('men/',views.mens_products, name='mens_products'),
+    path('women/', views.womens_products, name='womens_products'),
+    path('product_showcase/<id>',views.product_showcase,name='product_showcase'),
+
+
+   
+   path('view_cart/',views.view_cart, name="view_cart"),
+   path('add/<id>',views.add_to_cart,name="add_to_cart"),
+   path('adjust/<id>',views.adjust_cart,name="adjust_cart"),
+   path('remove_cart/<id>',views.remove_cart,name="remove_cart"),
+  
+
+
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

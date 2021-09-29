@@ -4,6 +4,9 @@
 
 {% block title %}Đăng nhập | {% endblock %}
 
+
+
+
 {% block content %}
 <form method="POST">{% csrf_token %}
 <div class="main-area">
@@ -17,6 +20,9 @@
       <label for="id_password" class="login-labels">Password*</label> 
       {{ form.password.errors }}
       {{ form.password|addclass:'form-control'|addplaceholder:'Your Password' }}
+      <label>
+            <input type="checkbox" value="remember-me"> Remember me
+      </label>
       <br>
 <button type="submit" class="btn btn-primary btn-lg signup-button">Login</button>
 </form>
