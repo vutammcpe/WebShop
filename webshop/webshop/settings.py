@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django_forms_bootstrap',
+    'stripe',
 
     'environ',
     'multiselectfield',
@@ -180,3 +181,7 @@ EMAIL_HOST_USER ='vutammcpe372@gmail.com'
 #EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
 EMAIL_HOST_PASSWORD = 'vutambd123'
 DEFAULT_FROM_EMAIL = 'Testing <vutammcpe372@gmail.com>'
+
+
+STRIPE_PUBLISHABLE = os.environ.get('STRIPE_PUBLISHABLE')
+STRIPE_SECRET = os.environ.get('STRIPE_SECRET')

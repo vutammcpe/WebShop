@@ -33,7 +33,10 @@
     {% include 'core/messages.html' %}
         <nav class="navbar is-dark" >
             <div class="navbar-brand">
-                <a style="text-decoration: none"  href="{% url 'frontpage' %}" class="navbar-item"><strong>FAISNE</strong></a>
+                <a style="text-decoration: none"  href="{% url 'frontpage' %}" class="navbar-item">
+                    <span><img src="{% static 'img/favicons/favicon-16x16.png' %}" alt="This is logo"></span>
+                    <strong>FAISNE</strong>
+                </a>
         
                 <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="main-navbar">
                     <span aria-hidden="true"></span>
@@ -46,13 +49,14 @@
 
                 <div class="navbar-start">
                     <div class="navbar-item">
-                        <form method="get" action="">
+                        <form method="get" action="{% url 'search' %}">
                             <div class="field has-addons">
                                 <div class="control">
                                     <input type="text" class="input" placeholder="Search..." name="query">
                                 </div>
                                 <div class="control">
-                                    <button class="button is-dark is-uppercase">Tìm kiếm</button>
+                                    <button class="button is-dark"><i class="fa fa-search"></i>
+                                    Tìm kiếm</button>
                                 </div>
                             </div>
                         </form>
@@ -64,24 +68,33 @@
                         <a href="{% url 'category' category.slug %}" class="navbar-item">{{ category.title }}</a>
                     {% endfor %}
 
-                    <a style="text-decoration: none" href="{% url 'contact' %}" class="navbar-item">Liên hệ</a>
+                    <a style="text-decoration: none" href="{% url 'contact' %}" class="navbar-item"><i class="fa fa-phone"></i>
+                    Liên hệ</a>
                     
-                    <a class="navbar-item" href="{% url 'signup' %}">Signup</a>
+                    <a class="navbar-item" href="{% url 'signup' %}"><i class="fa fa-user-plus"></i>
+                        Signup
+                    </a>
                     
 
                     {% if user.is_authenticated %}
                         
                     
-                        <a class="navbar-item" href="{% url 'logout' %}">Logout</a>
+                        <a class="navbar-item" href="{% url 'logout' %}"><i class="fa fa-sign-out"></i>
+                            Logout
+                        </a>
                         
                         
-                        <a class="navbar-item" href="profile">Welcome, {{ user.name }}</a>
+                        <a class="navbar-item" href="profile"><i class="fa fa-user"></i>
+                            Welcome, {{ user.name }}
+                        </a>
                         
 
                     {% else %}
 
                         
-                        <a class="navbar-item" href="{% url 'login' %}">Login</a>
+                        <a class="navbar-item" href="{% url 'login' %}"><i class="fa fa-sign-in"></i>
+                            Login
+                        </a>
                         
 
                     {% endif %}
@@ -109,7 +122,8 @@
         <footer class="footer">
             <center>
                 <h3 class="is-size-4 mb-4">FAISNE-shop</h3>               
-                
+                <p class="float-end"><a href="#"><i class="fa fa-long-arrow-up"></i>
+                Back to top</a></p>
                 <div class="footer-copyright text-center my-auto pt-3 pb-3 text-oc-footer"> 
                     © 2021 Web cua Vu Tam cam coppy. 
                 </div>

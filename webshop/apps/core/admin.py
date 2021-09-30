@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .forms import CustomUserCreationForm, CustomUserChangeForm
 from django.contrib.auth.admin import UserAdmin
-from .models import   CustomUser, Customer,SellerAdditional,Seller,Product,GenderFilter,Contact
+from .models import   CustomUser, Customer,SellerAdditional,Seller,Product,GenderFilter,Contact,Order,OrderLineItem
 # Register your models here.
 
 
@@ -37,6 +37,15 @@ class SellerAdmin(admin.ModelAdmin):
     )
 
 
+class OrderLineAdminInline(admin.TabularInline):
+    model = OrderLineItem
+
+
+class OrderAdmin(admin.ModelAdmin):
+    inlines = (OrderLineAdminInline, )
+
+
+admin.site.register(Order, OrderAdmin)
 
 
 

@@ -1,16 +1,17 @@
 
 from django.http import request
 from django.shortcuts import render,  HttpResponse, redirect,get_object_or_404
-from django.views.generic import CreateView
-from .forms import  RegistrationFormCustomer,BillingAddressForm,ContactUsForm
+from django.views.generic import CreateView,FormView
+from .forms import  CustomUserChangeForm, RegistrationFormCustomer,BillingAddressForm,ContactUsForm,OrderForm,MakePaymentForm
 from .models import  CustomUser,BillingAddress
 from django.urls import reverse_lazy, reverse
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required
-
+from django.utils import timezone
 
 from django.db.models import Q
 from webshop import settings
+from django.conf import settings
 from django.core.mail import send_mail
 from .tokens import account_activation_token
 from django.utils.encoding import force_bytes, force_text
@@ -19,8 +20,10 @@ from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
-from .models import Product,GenderFilter
+from .models import Product,GenderFilter,Order,OrderLineItem
 from django.http import HttpResponseRedirect
+import stripe
+
 
 #from apps.product.models import Product
 
@@ -127,30 +130,35 @@ def contactus(request):
     return render(request, 'core/contact.html', {'form':ContactUsForm})
 
 
+class profile(FormView):
+    form_class=CustomUserChangeForm
+    template_name='core/profile.html'
+    success_url=reverse_lazy('profile')
 
 
 
-@login_required
-def profile(request):
-    """
-    Shows the customer their current billing address details.
-    Allows the customer to update their billing address details.
-    Creates a new billing address on completion.
-    """
 
-    billing_address = BillingAddress.objects.filter(user=request.user).first()
-    if request.method == "POST":
-        billing_form = BillingAddressForm(request.POST, instance=billing_address)
-        if billing_form.is_valid():
-            billing_address = billing_form.save(commit=False)
-            billing_address.user = request.user
-            billing_address.save()
-            messages.success(request,
-                             "Your billing address has been updated successfully")
-    else:
-        billing_form = BillingAddressForm(instance=billing_address)
+# @login_required
+# def profile(request):
+#     """
+#     Shows the customer their current billing address details.
+#     Allows the customer to update their billing address details.
+#     Creates a new billing address on completion.
+#     """
 
-    return render(request, 'core/profile.html', {"billing_form": billing_form})
+#     billing_address = BillingAddress.objects.filter(user=request.user).first()
+#     if request.method == "POST":
+#         billing_form = BillingAddressForm(request.POST, instance=billing_address)
+#         if billing_form.is_valid():
+#             billing_address = billing_form.save(commit=False)
+#             billing_address.user = request.user
+#             billing_address.save()
+#             messages.success(request,
+#                              "Your billing address has been updated successfully")
+#     else:
+#         billing_form = BillingAddressForm(instance=billing_address)
+
+#     return render(request, 'core/profile.html', {"billing_form": billing_form})
 
 
 def all_products(request):
@@ -183,7 +191,17 @@ def view_cart(request):
     """A View that renders the cart contents page"""
     return render(request, "core/parts/cart.html")
 
-@login_required
+
+def do_search(request):
+    products = Product.objects.filter(title__icontains=request.GET['query'])
+    if products:
+        return render(request, "core/parts/products.html", {"products": products})
+    else:
+        return render(request, "core/frontpage.html")
+
+
+
+
 def add_to_cart(request, id):
     """Add a quantity of the specified product to the cart"""
 
@@ -198,7 +216,7 @@ def add_to_cart(request, id):
     return_path = request.POST.get('return_path','/')
     return HttpResponseRedirect(return_path)
 
-@login_required
+
 def adjust_cart(request, id):
     """
     Adjust the quantity of the specified product to the specified
@@ -217,6 +235,8 @@ def adjust_cart(request, id):
 
     request.session['apps'] = cart
     return redirect(reverse('view_cart'))
+
+
 def remove_cart(request, id):
     cart = request.session.get('apps', {})
     if cart:
@@ -225,7 +245,70 @@ def remove_cart(request, id):
     request.session['apps'] = cart
     return redirect(reverse('view_cart'))
 
-   
+
+
+
+
+
+stripe.api_key = settings.STRIPE_SECRET
+
+
+@login_required()
+def checkout(request):
+    if request.method == "POST":
+        order_form = OrderForm(request.POST)
+        payment_form = MakePaymentForm(request.POST)
+
+        if order_form.is_valid() and payment_form.is_valid():
+            order = order_form.save(commit=False)
+            order.date = timezone.now()
+            order.save()
+
+            cart = request.session.get('apps', {})
+            total = 0
+            for id, quantity in cart.items():
+                product = get_object_or_404(Product, pk=id)
+                total += quantity * product.price
+                order_line_item = OrderLineItem(
+                    order=order,
+                    product=product,
+                    quantity=quantity
+                )
+                order_line_item.save()
+
+            try:
+                customer = stripe.Charge.create(
+                    amount=int(total * 100),
+                    currency="EUR",
+                    description=request.user.email,
+                    card=payment_form.cleaned_data['stripe_id'],
+                )
+            except stripe.error.CardError:
+                messages.error(request, "Your card was declined!")
+
+            if customer.paid:
+                messages.error(request, "You have successfully paid")
+                request.session['apps'] = {}
+                return redirect(reverse('frontpage'))
+            else:
+                messages.error(request, "Unable to take payment")
+        else:
+            print(payment_form.errors)
+            messages.error(request,
+                           "We were unable to take a payment with that card!"
+                           )
+    else:
+        payment_form = MakePaymentForm()
+        order_form = OrderForm()
+
+    return render(request, "core/checkout.html", {
+        'order_form': order_form,
+        'payment_form': payment_form,
+        'publishable': settings.STRIPE_PUBLISHABLE
+        }
+    )
+
+
 
 
 
