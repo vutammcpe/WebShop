@@ -179,8 +179,8 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_HOST_USER ='vutammcpe372@gmail.com'
 #EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-EMAIL_HOST_PASSWORD = 'vutambd123'
-DEFAULT_FROM_EMAIL = 'Testing <vutammcpe372@gmail.com>'
+EMAIL_HOST_PASSWORD = ''# Điền password mail muốn test vô đây
+DEFAULT_FROM_EMAIL = 'Testing <>'# Điền mail muốn là người gửi vô đây
 
 
 STRIPE_PUBLISHABLE = os.environ.get('STRIPE_PUBLISHABLE')
